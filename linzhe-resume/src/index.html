@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>林喆 · AI产品专家</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --cream: #fbf8f6;
+  --accent: #FFE97D;
+  --teal: #8CC7C4;
+  --deep-teal: #2C687B;
+  --dark-text: #1e2a2f;
+  --soft-gray: #f0ece8;
+  --card-shadow: 0 12px 28px -8px rgba(0,0,0,0.06), 0 0 0 1px rgba(255,233,125,0.3);
+  --border-radius-card: 1.75rem;
+}
+
+body {
+  background-color: var(--cream);
+  font-family: 'Microsoft YaHei', 'Noto Sans SC', 'Inter', sans-serif;
+  color: var(--dark-text);
+  line-height: 1.5;
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+/* 首屏终端区域 */
+.hero-loading {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: #0d1117;
+  position: relative;
+  overflow: hidden;
+  padding: 2rem;
+}
+
+.terminal-window {
+  width: 100%;
+  max-width: 720px;
+  background: #161b22;
+  border-radius: 12px;
+  box-shadow: 0 20px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06);
+  overflow: hidden;
+  z-index: 2;
+}
+
+.terminal-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 18px;
+  background: #1c2129;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.terminal-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+}
+.terminal-dot--red { background: #ff5f57; }
+.terminal-dot--yellow { background: #febc2e; }
+.terminal-dot--green { background: #28c840; }
+
+.terminal-header-title {
+  flex: 1;
+  text-align: center;
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.35);
+  margin-right: 52px;
+}
+
+.terminal-body {
+  padding: 1.8rem 2rem 2.5rem;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: clamp(0.85rem, 1.8vw, 1rem);
+  line-height: 1.8;
+  min-height: 360px;
+}
+
+.terminal-line {
+  opacity: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.terminal-line.visible { opacity: 1; }
+.terminal-line .cmd { color: var(--teal); }
+.terminal-line .cmd-text { color: #8b949e; }
+.terminal-line .output { color: var(--accent); }
+.terminal-line .highlight { color: #28c840; }
+
+.terminal-cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.15em;
+  background: var(--accent);
+  vertical-align: text-bottom;
+  animation: cursorBlink 1s step-end infinite;
+}
+
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.hero-scroll {
+  position: absolute;
+  bottom: 3rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  opacity: 0;
+  animation: fadeUpScroll 0.6s 8s forwards;
+}
+
+@keyframes fadeUpScroll {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 0.8; transform: translateY(0); }
+}
+
+.hero-scroll span {
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+}
+
+.hero-scroll-line {
+  width: 1px; height: 40px;
+  background: var(--accent);
+  opacity: 0.4;
+  animation: scrollPulse 2s ease-in-out infinite;
+}
+
+@keyframes scrollPulse {
+  0%, 100% { transform: scaleY(1); opacity: 0.3; }
+  50% { transform: scaleY(1.5); opacity: 0.6; }
+}
+
+.cursor-glow {
+  position: fixed;
+  width: 380px;
+  height: 380px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,233,125,0.08) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+body:hover .cursor-glow { opacity: 1; }
+
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+section {
+  position: relative;
+  padding: 5rem 0;
+}
+.section-label {
+  font-family: 'Inter', monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #999;
+  margin-bottom: 1rem;
+}
+.fade-up {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+}
+.fade-up.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 对话部分 */
+.journey-section {
+  background: #fefcf6;
+}
+.journey-headline {
+  font-family: 'Inter', 'Noto Sans SC', sans-serif;
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  text-align: center;
+  margin-bottom: 2.5rem;
+  color: #1a1a1a;
+}
+.journey-headline em {
+  font-style: normal;
+  color: var(--deep-teal);
+}
+.journey-two-screens {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+@media (max-width: 768px) {
+  .journey-two-screens { grid-template-columns: 1fr; }
+}
+.journey-window {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.08);
+  background: #fff;
+  height: 70vh;
+  display: flex;
+  flex-direction: column;
+}
+.journey-window-bar {
+  background: #f0f0f0;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid #e0e0e0;
+  flex-shrink: 0;
+}
+.journey-window-dots { display: flex; gap: 6px; }
+.journey-window-dots span { width: 10px; height: 10px; border-radius: 50%; }
+.journey-window-title { font-size: 12px; color: #888; font-weight: 500; }
+.journey-chat-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #fafafa;
+}
+.jchat {
+  max-width: 85%;
+}
+.jchat-name {
+  font-size: 10px;
+  color: #999;
+  margin-bottom: 2px;
+  font-weight: 600;
+}
+.jchat-tag {
+  font-size: 10px;
+  color: var(--deep-teal);
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.jchat-msg {
+  padding: 8px 12px;
+  border-radius: 14px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.jchat--cola {
+  align-self: flex-start;
+}
+.jchat--cola .jchat-msg {
+  background: #BDE3C3;
+  color: #222831;
+  border-bottom-left-radius: 4px;
+}
+.jchat--me {
+  align-self: flex-end;
+}
+.jchat--me .jchat-msg {
+  background: #BBDCE5;
+  color: #222831;
+  border-bottom-right-radius: 4px;
+}
+.jchat--me .jchat-name {
+  text-align: right;
+}
+
+/* 项目卡片 */
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+.project-card {
+  background: white;
+  border-radius: var(--border-radius-card);
+  padding: 1.8rem;
+  transition: all 0.3s ease;
+  border-top: 6px solid var(--accent);
+  box-shadow: var(--card-shadow);
+}
+.project-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 35px -12px rgba(255,233,125,0.3), 0 0 0 1px var(--accent);
+}
+.project-icon {
+  font-size: 2.2rem;
+  background: var(--cream);
+  width: 55px;
+  height: 55px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  margin-bottom: 1.2rem;
+  color: var(--deep-teal);
+}
+.project-card h3 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+.project-desc {
+  color: #3a4a5a;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+  font-size: 0.9rem;
+}
+.tech-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.8rem 0 1.2rem;
+}
+.tech-stack span {
+  background: #f0ece8;
+  padding: 0.2rem 0.8rem;
+  border-radius: 30px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--deep-teal);
+}
+.result-badge {
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: rgba(255,233,125,0.2);
+  display: inline-block;
+  padding: 0.2rem 0.7rem;
+  border-radius: 20px;
+  margin-bottom: 0.8rem;
+  color: #b35400;
+}
+.card-link {
+  background: transparent;
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  padding: 0.4rem 1.2rem;
+  border-radius: 2rem;
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: inline-block;
+  text-decoration: none;
+  transition: 0.2s;
+}
+.card-link:hover {
+  background: var(--accent);
+  color: #1e2a2f;
+}
+
+/* 底部深色区域 */
+.contact-fullwidth {
+  width: 100%;
+  background: #1a2332;
+  margin-top: 2rem;
+}
+.contact-inner {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 5rem 2rem 3rem;
+  text-align: center;
+}
+.contact-headline {
+  font-family: 'Inter', 'Noto Sans SC', sans-serif;
+  font-weight: 800;
+  font-size: clamp(2rem, 5vw, 3rem);
+  margin-bottom: 2rem;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+.contact-links {
+  display: flex;
+  justify-content: center;
+  gap: 2.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 3rem;
+}
+.contact-link {
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 400;
+  opacity: 0.7;
+  transition: all 0.3s;
+  position: relative;
+  padding-bottom: 4px;
+}
+.contact-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 0; height: 1px;
+  background: var(--teal);
+  transition: width 0.3s;
+}
+.contact-link:hover { opacity: 1; }
+.contact-link:hover::after { width: 100%; }
+.contact-quote {
+  font-weight: 300;
+  font-size: 0.9rem;
+  opacity: 0.5;
+  line-height: 1.8;
+  color: #ddd;
+}
+.footer {
+  background: #1a2332;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding: 2rem;
+  text-align: center;
+}
+.footer p {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.2);
+  letter-spacing: 0.1em;
+}
+
+@media (max-width: 760px) {
+  .container { padding: 0 1.2rem; }
+  .projects-grid { grid-template-columns: 1fr; }
+  .journey-window { height: auto; min-height: 500px; }
+  .contact-inner { padding: 3rem 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="cursor-glow" id="cursorGlow"></div>
+
+<!-- 首屏：终端加载区域 -->
+<div class="hero-loading">
+  <div class="terminal-window">
+    <div class="terminal-header">
+      <div class="terminal-dot terminal-dot--red"></div>
+      <div class="terminal-dot terminal-dot--yellow"></div>
+      <div class="terminal-dot terminal-dot--green"></div>
+      <div class="terminal-header-title">linzhe@portfolio ~ %</div>
+    </div>
+    <div class="terminal-body" id="terminalBody"></div>
+  </div>
+  <div class="hero-scroll">
+    <span>Scroll</span>
+    <div class="hero-scroll-line"></div>
+  </div>
+</div>
+
+<div class="main-content">
+  <div class="container">
+    
+    <!-- 对话部分 -->
+    <section class="journey-section">
+      <p class="section-label fade-up">My Journey</p>
+      <h2 class="journey-headline fade-up">人生是我的<em>高阶试炼场</em></h2>
+      
+      <div class="journey-two-screens fade-up">
+        <!-- 第一屏：早期经历 -->
+        <div class="journey-screen">
+          <div class="journey-window">
+            <div class="journey-window-bar">
+              <div class="journey-window-dots">
+                <span style="background:#ff5f57;"></span>
+                <span style="background:#ffbd2e;"></span>
+                <span style="background:#27c93f;"></span>
+              </div>
+              <div class="journey-window-title">🧊 小 G 和 林喆 的采访 · 早期经历</div>
+            </div>
+            <div class="journey-chat-area">
+              <div class="jchat jchat--cola"><div class="jchat-name">🧊 小 G</div><div class="jchat-tag">2013 → 2017</div><div class="jchat-msg">跟大家讲讲你的大学吧？</div></div>
+              <div class="jchat jchat--me"><div class="jchat-name">林喆</div><div class="jchat-msg">我本科在武汉大学读传播学，拿过专业第一和甲等奖学金 💰</div></div>
+              <!-- 以下为插入照片的位置 -->
+              <div class="jchat jchat--me">
+                <div class="jchat-name">林喆</div>
+                <div class="jchat-msg">
+                  那时候我还是武汉大学民乐团弹拨声部的首席，每年要参加很多场演出，给你看我的演出照片 🎵
+                  <br>
+                  <img src="https://i.ibb.co/zhG3GZ27/Wechat-IMG1501.jpg" alt="演出照片" style="max-width: 100%; border-radius: 12px; margin-top: 8px;">
+                </div>
+              </div>
+              <div class="jchat jchat--cola"><div class="jchat-name">🧊 小 G</div><div class="jchat-tag">传播学 → 信息科学</div><div class="jchat-msg">后来为什么转做技术了？传播学到计算机（人工智能）听起来就像是一件不可能的事情</div></div>
+              <div class="jchat jchat--me"><div class="jchat-name">林喆</div><div class="jchat-msg">我上大学的时候每个暑假都去互联网公司实习，在实习过程中发现用技术解决用户问题特别有成就感，就萌生了去读计算机的想法。大二下就开始修计算机系的课程，后面大四申请学校的时候申请的都是计算机相关专业 🧠</div></div>
+              <div class="jchat jchat--cola"><div class="jchat-name">🧊 小 G</div><div class="jchat-tag">2018 → 2020 美国🇺🇸</div><div class="jchat-msg">哈哈哈哈文科生跨专业读计算机，还是人工智能领域，是什么感觉？</div></div>
+              <div class="jchat jchat--me"><div class="jchat-name">林喆</div><div class="jchat-msg">很有趣也很累。我们系当年就录取了我一个文科背景的学生，我的课业压力很重，每天都在高强度学习新的知识，期末周甚至要睡图书馆 💻</div></div>
+              <div class="jchat jchat--cola"><div class="jchat-name">🧊 小 G</div><div class="jchat-msg">听起来你在美国遇到了很多很多挑战</div></div>
+              <div class="jchat jchat--me"><div class="jchat-name">林喆</div><div class="jchat-msg">哈哈哈挑战对我来说更像是一种高效的边界扩容。学习计算机对我来说是非常重要的经历，我学会了怎么把感性描述理性实物，怎么在混乱中重建秩序 🌏</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 第二屏：AI攻坚与Gap（保持不变） -->
+        <div class="journey-screen">
+          <div class="journey-window">
+            <div class="journey-window-bar">
+              <div class="journey-window-dots">
+                <span style="background:#ff5f57;"></span>
+                <span style="background:#ffbd2e;"></span>
+                <span style="background:#27c93f;"></span>
+              </div>
+              <div class="journey-window-title">🧊 小 G 和 林喆 的采访 · 工作经历与生活</div>
+            </div>
+            <div class="journey-chat-area">
+              <div class="jchat jchat--cola"><div class="jchat-name">🧊 小 G</div><div class="jchat-tag">2020 → OPPO</div><div class="jchat-msg">毕业后直接进了互联网？</div></div>
+              <div class="jchat jchat--me"><div class="jchat-name">林喆</div><div class="jchat-msg">对，先做联运游戏的用户产品经理，主要做付费增长。后来转到了AI智慧服务产品（负一屏）做AI策略与用户增长 🚀</div></div>
+              <div class="jchat jchat--me"><div class="jchat-name">林喆</div><div class="jchat-msg">在负一屏的2年，从0到1做了负一屏的AI智能意图预测系统，还重构了整个APP，看着日活从持续两年下滑到逆势增长到6700万，很有成就感 🍻✨</div></div>
+              <div class="jchat jchat--cola"><div class="jchat-name">🧊 小 G</div><div class="jchat-tag">Multi-Agent 意图预测</div><div class="jchat-msg">那个“从0到1的意图预测系统”具体怎么做的？</div></div>
+              <div class="jchat jchat--me"><div class="jchat-name">林喆</div><div class="jchat-msg">我设计Multi-Agent架构，把用户行为序列变成实时意图标签，再自动匹配服务卡片。直接拉动DAU上涨200万+，有效活跃率+8% 📈</div></div>
+              <div class="jchat jchat--cola"><div class="jchat-name">🧊 小 G</div><div class="jchat-tag">商业化 & 增长</div><div class="jchat-msg">商业化也做得很好？</div></div>
+              <div class="jchat jchat--me"><div class="jchat-name">林喆</div><div class="jchat-msg">嗯，我设计了基于MAS协同的商业化架构，CPM提升34%，年营收净增8800万。连续三年拿公司级优秀项目奖 🏆</div></div>
+              <div class="jchat jchat--cola"><div class="jchat-name">🧊 小 G</div><div class="jchat-tag">选择gap</div><div class="jchat-msg">你离职gap也有一段时间了，在这期间你做了什么呢？</div></div>
+              <div class="jchat jchat--me"><div class="jchat-name">林喆</div><div class="jchat-msg">离职当时是因为左脚骨折+韧带断了，在家休养。26年1月份休养好了之后，我意识到自己身体素质太差，就办了张健身卡去打bodycombat了，瘦了40斤。</div></div>
+              <div class="jchat jchat--me"><div class="jchat-name">林喆</div><div class="jchat-msg">在打bc这段时间我利用自己的特长做了个高端私域咨询项目（玄学），通过熟人裂变建立信任背书，切入1-2k+/h的高端客单。这让我对【情感陪伴】、【非标服务标准化交付】和【ai能帮助我做什么】有了新的理解和思考。</div></div>
+              <div class="jchat jchat--cola"><div class="jchat-name">🧊 小 G</div><div class="jchat-tag">现在与未来</div><div class="jchat-msg">现在呢？</div></div>
+              <div class="jchat jchat--me"><div class="jchat-name">林喆</div><div class="jchat-msg">现在开始找工作也是我认为自己从身体到思维已经准备好了，我的状态比任何时候都更充沛，可以立刻投入业务 💪🏻</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 项目经验 -->
+    <section>
+      <div class="section-label fade-up">// PROJECT EXPERIENCE</div>
+      <h2 class="fade-up" style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">项目经验</h2>
+      <div class="projects-grid">
+        <div class="project-card fade-up">
+          <div class="project-icon"><i class="fas fa-chart-line"></i></div>
+          <h3>负一屏·AI增长与商业化</h3>
+          <div class="result-badge">📈 DAU +500万 · 营收+8800万</div>
+          <div class="project-desc">从0到1建设Multi-Agent意图预测系统，拉新折损降低95%，有效活跃率+8%，DAU逆势增至6700万；CPM+34%，年营收净增8800万。</div>
+          <div class="tech-stack"><span>Multi-Agent</span><span>意图预测</span><span>RFM</span><span>穿山甲RTA</span></div>
+          <a href="#" class="card-link">查看策略细节 →</a>
+        </div>
+        <div class="project-card fade-up">
+          <div class="project-icon"><i class="fas fa-mobile-alt"></i></div>
+          <h3>负一屏APP结构性重构</h3>
+          <div class="result-badge">🏆 NPS从倒数第1→第3</div>
+          <div class="project-desc">重构“工具区-动态区-内容区”流向，有效活跃率+7%，停留时长+23%，NPS口碑逆袭。</div>
+          <div class="tech-stack"><span>用户研究</span><span>AI搜索集成</span><span>商业化设计</span></div>
+          <a href="#" class="card-link">查看重构策略 →</a>
+        </div>
+        <div class="project-card fade-up">
+          <div class="project-icon"><i class="fas fa-gamepad"></i></div>
+          <h3>联运游戏GMV增长引擎</h3>
+          <div class="result-badge">🎮 GMV +10% · 付费率 +5%</div>
+          <div class="project-desc">配置化工具将活动周期从7天缩至0.5天，琥珀会员体系建立留存护城河，连续三年获业务伙伴奖。</div>
+          <div class="tech-stack"><span>RFM分层</span><span>自动化营销</span><span>会员权益</span></div>
+          <a href="#" class="card-link">查看增长方案 →</a>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- 底部深色区域 -->
+<div class="contact-fullwidth">
+  <div class="contact-inner">
+    <h2 class="contact-headline fade-up">Say Hi</h2>
+    <div class="contact-links fade-up">
+      <a href="mailto:linzhe1116@qq.com" class="contact-link">📮 邮箱</a>
+      <a href="https://github.com/LinJiii" target="_blank" rel="noopener" class="contact-link">🐙 GitHub</a>
+    </div>
+    <p class="contact-quote fade-up">"Penser est mon combat<br>——Virginia Woolf"</p>
+  </div>
+  <footer class="footer">
+    <p>© 2025 林喆 · AI驱动增长 · 简历实时更新</p>
+  </footer>
+</div>
+
+
+</body>
+</html>
